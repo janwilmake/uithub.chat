@@ -2,7 +2,7 @@
 
 Goals:
 
-- Smooth onboarding, freemium monetised
+- ✓ Smooth onboarding, freemium monetised
 - Easily switch context from any URL
 - Super easy to integrate with any context by adding JSON URL (can even be dynamic)
 - Ability to easily filter on file objects
@@ -10,4 +10,5 @@ Goals:
 Non-goals:
 
 - Super beautiful UI, animations, streaming, etc (functionality first)
+- Message editing, history saving (focus on core features)
 - Allow BYOK (optimise for accessibility)

@@ -30,14 +30,12 @@ Header
 Nav
 
 - Hide bin icon until hover, align at the right of the menu item, change to 'x'
-- When clicking a menu item, focus on chat input
+- When clicking a menu item, focus on chat input, if visible
 - Context retrieval should go via proxy to avoid error. Should return urls for screenshot/content/html for html urls.
 - If added context is of type html, allow choosing screenshot/content/html and set context-item appropriately.
 
 Misc
 
 - Add status via status API for providers
-
-🔥 Add githuw (context-driven LLM chat) to forgithub and uithub.cf header
 
 🔥 Now fix patching and allow patching from response with `<code>`
