@@ -4,7 +4,7 @@ Goals:
 
 - ✓ Smooth onboarding, freemium monetised
 - Easily switch context from any URL
-- Super easy to integrate with any context by adding JSON URL (can even be dynamic)
+- Super easy to integrate with any context by adding 'Context URL' (can even be dynamic)
 - Ability to easily filter on file objects
 
 Non-goals:
@@ -15,6 +15,7 @@ Non-goals:
 
 Wishlist:
 
+- **Context URL**: if url outputs JSON with 'context' it should store that but further expand its context {url,title}[] but it should do this on each refresh from the original URL.
 - **Status**: Add status via status API for providers
 - **Droparea**: create droparea that lights up purple dotted so you can drag and drop URLs
 - **Sharing result**: Use x-output-url from chatcompletions.com to allow sharing of the response (add outlink besides copy). Maybe can also use URL as prompt instead, and allow `?chat=chatcompletionsURL` to load it into the chat. This way, people can save their chat history!
