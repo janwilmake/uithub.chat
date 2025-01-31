@@ -4,5 +4,19 @@
   "compatibility_date": "2025-01-30",
   "assets": { "directory": "./" },
   "main": "main.ts",
-  "routes": [{ "pattern": "chat.uithub.com", "custom_domain": true }]
+  "routes": [{ "pattern": "chat.uithub.com", "custom_domain": true }],
+  "vars": {
+    "GITHUB_REDIRECT_URI": "https://dashboard.uithub.com/callback",
+    "LOGIN_REDIRECT_URI": "https://chat.uithub.com",
+    "COOKIE_DOMAIN_SHARING": "true"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SPONSOR_DO",
+        "class_name": "SponsorDO",
+        "script_name": "sponsorflare"
+      }
+    ]
+  }
 }

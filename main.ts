@@ -1,7 +1,12 @@
 import { Env as SponsorflareEnv, getSponsor, middleware } from "sponsorflare";
 import indexHtml from "./index.html";
 
-interface Env extends SponsorflareEnv {}
+interface Env extends SponsorflareEnv {
+  deepseekApiKey: string;
+  anthropicApiKey: string;
+  openaiApiKey: string;
+  groqApiKey: string;
+}
 
 interface Usage {
   prompt_tokens: number;
@@ -9,11 +14,25 @@ interface Usage {
   total_tokens: number;
 }
 
-const COST_PER_MILLION_TOKENS = 1;
-
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const providers = {
+      deepseek: {
+        llmApiKey: env.deepseekApiKey,
+        llmBasePath: "https://api.deepseek.com/v1",
+      },
+      anthropic: { llmApiKey: env.anthropicApiKey, llmBasePath: "" },
+      openai: { llmApiKey: env.openaiApiKey, llmBasePath: "" },
+      groq: { llmApiKey: env.groqApiKey, llmBasePath: "" },
+    };
+
+    const providerForModels: { [key: string]: keyof typeof providers } = {
+      "deepseek-chat": "deepseek",
+      "deepseek-reasoner": "deepseek",
+    };
+
     const url = new URL(request.url);
+
     const sponsorflare = await middleware(request, env);
     if (sponsorflare) return sponsorflare;
     const sponsor = await getSponsor(request, env);
@@ -50,7 +69,22 @@ export default {
     }
 
     try {
-      const requestBody = await request.json();
+      const requestBody: { model: string } = await request.json();
+
+      if (!requestBody.model) {
+        return new Response("Missing model", { status: 400 });
+      }
+      const provider =
+        providerForModels[requestBody.model as keyof typeof providerForModels];
+      if (!provider) {
+        return new Response("Model not supported", { status: 400 });
+      }
+
+      const { llmApiKey, llmBasePath } =
+        providers[provider as keyof typeof providers];
+      if (!llmApiKey || !llmBasePath) {
+        return new Response("Missing API Key", { status: 500 });
+      }
 
       // Forward the request to chatcompletions.com
       const response = await fetch(
@@ -58,6 +92,8 @@ export default {
         {
           method: "POST",
           headers: {
+            "X-LLM-API-Key": llmApiKey,
+            "X-LLM-Base-Path": llmBasePath,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(requestBody),
@@ -72,9 +108,12 @@ export default {
 
       // Calculate and charge for usage
       if (data.usage) {
-        const cost = calculateCost(data.usage);
+        // TODO: Make it depend on LLM provided
+        const cost = { completion: 1, prompt: 1 };
+
+        const priceCreditUsd = calculateCost(data.usage, cost);
         const { charged } = await getSponsor(request, env, {
-          charge: cost * 100,
+          charge: priceCreditUsd * 100,
           allowNegativeClv: true,
         });
         console.log("Charged successfully:", { cost, charged });
@@ -93,6 +132,12 @@ export default {
   },
 };
 
-function calculateCost(usage: Usage): number {
-  return (usage.total_tokens * COST_PER_MILLION_TOKENS) / 1_000_000;
+function calculateCost(
+  usage: Usage,
+  cost: { prompt: number; completion: number },
+): number {
+  return (
+    (usage.prompt_tokens * cost.prompt) / 1_000_000 +
+    (usage.completion_tokens * cost.completion) / 1_000_000
+  );
 }
