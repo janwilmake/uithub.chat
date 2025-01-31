@@ -161,9 +161,9 @@ if (window.data?.sponsor?.is_authenticated) {
   const userInfo = document.createElement("div");
   userInfo.innerHTML = `
     <div class="text-sm">${window.data.sponsor.owner_login}</div>
-    <div class="text-xs text-purple-600">Balance: $${parseFloat(
-      window.data.sponsor.balance || "0",
-    ).toFixed(2)}</div>
+    <div class="text-xs text-purple-600">Balance: $${
+      window.data.sponsor.balance || "0"
+    }</div>
   `;
   userCard.appendChild(userInfo);
 

@@ -6,27 +6,26 @@
 - Fix chatcompletions.com error and ensure chatting works
 - ✅ Add other model names and api keys (openai, anthropic)
 
-# Tiny improvements
-
-prompt:
-
-- Create system prompt to output with `<content path="">some code or 'null' to delete</content>` etc similar to what i had for filetransformers, but using xml
-
-Tabs;
+✅ Tabs;
 
 - Button for copying context to clipboard
-- add outlink that navigates to the URL of the selected context in headerbar (icon)
 - Show token count at menu tab (reads textarea value length / 5)
 
-Chat
+✅ Chat
 
 - Ensure loading shows at the location where the new message will be
 - Render markdown in response
 - Codeblock color highlighting
-- Buttons to copy codeblocks and copy responses
+- Buttons to copy responses
 - Chat input must be textarea
 - Allow darkmode by simply inverting all colors
 - Render `<think>` and any other raw tag, not in codeblock, as expandible things
+
+# Tiny improvements
+
+Header
+
+- Add outlink that navigates to the URL of the selected context in headerbar (icon)
 
 Nav
 

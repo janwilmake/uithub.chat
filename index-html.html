@@ -3,6 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UIThub Chat - Context-driven LLM Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -304,6 +308,8 @@
                 }
 
                 if (response.status === 402) {
+                    document.getElementById('messages').removeChild(loadingDiv);
+
                     appendMessage('system', 'You have spent more than $1. You need to add balance by sponsoring me');
                     return;
                 }
