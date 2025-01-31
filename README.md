@@ -1,0 +1,2 @@
+- Make sponsorflare + chatcompletions wrapped backend work (allow $1 free) - start from sponsorflare.chat
+- Add logged user profile to header (header.js) that also shows settings panel to change LLM

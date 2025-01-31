@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIThub Chat - Context-driven LLM Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'bounce-slow': 'bounce 1.5s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Left Navigation -->
+        <div class="w-1/4 bg-white border-r border-gray-200 flex flex-col">
+            <!-- Add Context Button -->
+            <div class="p-4 border-b border-gray-200">
+                <button onclick="addContext()"
+                    class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded hover:opacity-90 transition-opacity">
+                    Add Context
+                </button>
+            </div>
+            <!-- Navigation Tree -->
+            <div id="navigation" class="flex-1 overflow-y-auto p-2"></div>
+        </div>
+
+        <!-- Right Content -->
+        <div class="w-3/4 flex flex-col">
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-200 bg-white">
+                <button onclick="switchTab('context')" id="contextTab"
+                    class="px-4 py-2 hover:bg-gray-50 focus:outline-none border-b-2">
+                    Context
+                </button>
+                <button onclick="switchTab('chat')" id="chatTab"
+                    class="px-4 py-2 hover:bg-gray-50 focus:outline-none border-b-2">
+                    Chat
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 p-4 bg-gray-50">
+                <!-- Context View -->
+                <textarea id="contextContent" class="w-full h-full p-4 border rounded resize-none bg-white" readonly
+                    placeholder="Please select a context">
+                </textarea>
+
+                <!-- Chat Interface -->
+                <div id="chatInterface" class="hidden h-full flex flex-col">
+                    <div id="messages" class="flex-1 overflow-y-auto mb-4 bg-white border rounded p-4"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="messageInput" class="flex-1 p-2 border rounded"
+                            placeholder="Type your message...">
+                        <button onclick="sendMessage()" id="sendButton"
+                            class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded hover:opacity-90 transition-opacity">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 flex flex-col items-center">
+            <div class="flex space-x-2 mb-3">
+                <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: -0.3s"></div>
+                <div class="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style="animation-delay: -0.15s"></div>
+                <div class="w-3 h-3 bg-pink-500 rounded-full animate-bounce"></div>
+            </div>
+            <div class="text-gray-600">Processing your message...</div>
+        </div>
+    </div>
+
+    <script src="navigation.js"></script>
+
+    <script>
+        // Initialize active tab from localStorage or default to 'context'
+        const activeTab = localStorage.getItem('activeTab') || 'context';
+        switchTab(activeTab);
+
+        function switchTab(tab) {
+            localStorage.setItem('activeTab', tab);
+
+            // Update UI elements
+            const contextContent = document.getElementById('contextContent');
+            const chatInterface = document.getElementById('chatInterface');
+            const contextTab = document.getElementById('contextTab');
+            const chatTab = document.getElementById('chatTab');
+
+            if (tab === 'context') {
+                contextContent.classList.remove('hidden');
+                chatInterface.classList.add('hidden');
+                contextTab.classList.add('border-purple-500');
+                chatTab.classList.remove('border-purple-500');
+            } else {
+                contextContent.classList.add('hidden');
+                chatInterface.classList.remove('hidden');
+                contextTab.classList.remove('border-purple-500');
+                chatTab.classList.add('border-purple-500');
+            }
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const messagesContainer = document.getElementById('messages');
+            const contextContent = document.getElementById('contextContent');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const sendButton = document.getElementById('sendButton');
+
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            appendMessage('user', message);
+            messageInput.value = '';
+
+            // Show loading indicator and disable send button
+            loadingIndicator.classList.remove('hidden');
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+
+            try {
+                const response = await fetch('/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: contextContent.value,
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+                appendMessage('assistant', data.response);
+            } catch (error) {
+                console.error('Error:', error);
+                appendMessage('system', 'Error sending message. Please try again.');
+            } finally {
+                // Hide loading indicator and enable inputs
+                loadingIndicator.classList.add('hidden');
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        function appendMessage(role, content) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-2 p-2 rounded ${role === 'user'
+                ? 'bg-purple-100 ml-8'
+                : role === 'assistant'
+                    ? 'bg-gray-100 mr-8'
+                    : 'bg-red-100 text-center'
+                }`;
+            messageDiv.textContent = content;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Allow Enter key to send messages
+        document.getElementById('messageInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+
+</html>

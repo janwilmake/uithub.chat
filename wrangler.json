@@ -1,0 +1,8 @@
+{
+  "name": "uithub_chat",
+  "dev": { "port": 3000 },
+  "compatibility_date": "2025-01-30",
+  "assets": { "directory": "./" },
+  "main": "main.ts",
+  "routes": [{ "pattern": "chat.uithub.com", "custom_domain": true }]
+}
