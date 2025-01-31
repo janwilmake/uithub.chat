@@ -37,6 +37,7 @@
         <!-- Right Content -->
         <div class="w-3/4 flex flex-col">
             <!-- Tabs -->
+            <div id="header"></div>
             <div class="flex border-b border-gray-200 bg-white">
                 <button onclick="switchTab('context')" id="contextTab"
                     class="px-4 py-2 hover:bg-gray-50 focus:outline-none border-b-2">
@@ -83,12 +84,22 @@
         </div>
     </div>
 
+    <script src="header.js"></script>
     <script src="navigation.js"></script>
 
     <script>
         // Initialize active tab from localStorage or default to 'context'
         const activeTab = localStorage.getItem('activeTab') || 'context';
-        switchTab(activeTab);
+
+        // Check for last message in localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const lastMessage = localStorage.getItem('lastMessage');
+            if (lastMessage) {
+                document.getElementById('messageInput').value = lastMessage;
+                localStorage.removeItem('lastMessage');
+            }
+            switchTab(activeTab);
+        });
 
         function switchTab(tab) {
             localStorage.setItem('activeTab', tab);
@@ -138,10 +149,28 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        model: localStorage.getItem("model") || window.data.models[0],
                         prompt: contextContent.value,
                         message: message
                     })
                 });
+
+                if (response.status === 401) {
+                    localStorage.setItem('lastMessage', message);
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.status === 402) {
+                    appendMessage('system', 'You have spent more than $1. You need to add balance by sponsoring me');
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    alert(errorText);
+                    return;
+                }
 
                 const data = await response.json();
                 appendMessage('assistant', data.response);
@@ -161,10 +190,10 @@
             const messagesContainer = document.getElementById('messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `mb-2 p-2 rounded ${role === 'user'
-                ? 'bg-purple-100 ml-8'
-                : role === 'assistant'
-                    ? 'bg-gray-100 mr-8'
-                    : 'bg-red-100 text-center'
+                    ? 'bg-purple-100 ml-8'
+                    : role === 'assistant'
+                        ? 'bg-gray-100 mr-8'
+                        : 'bg-red-100 text-center'
                 }`;
             messageDiv.textContent = content;
             messagesContainer.appendChild(messageDiv);

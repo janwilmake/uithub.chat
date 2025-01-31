@@ -1,5 +1,5 @@
 import { Env as SponsorflareEnv, getSponsor, middleware } from "sponsorflare";
-import indexHtml from "./index.html";
+import indexHtml from "./index-html.html";
 
 interface Env extends SponsorflareEnv {
   deepseekApiKey: string;
@@ -55,7 +55,10 @@ export default {
       return new Response(
         indexHtml.replace(
           "<script>",
-          `<script>\nwindow.data = ${JSON.stringify({ sponsor })};\n\n`,
+          `<script>\nwindow.data = ${JSON.stringify({
+            sponsor,
+            models: Object.keys(providerForModels),
+          })};\n\n`,
         ),
         { headers: { "content-type": "text/html" } },
       );
@@ -97,7 +100,7 @@ export default {
       const { llmApiKey, llmBasePath } =
         providers[provider as keyof typeof providers];
       if (!llmApiKey || !llmBasePath) {
-        return new Response("Missing API Key", { status: 500 });
+        return new Response("Missing API Key for " + provider, { status: 500 });
       }
 
       // Forward the request to chatcompletions.com
@@ -115,7 +118,11 @@ export default {
       );
 
       if (!response.ok) {
-        throw new Error(`ChatCompletions API error: ${response.status}`);
+        throw new Error(
+          `ChatCompletions API error: ${
+            response.status
+          } - ${await response.text()}`,
+        );
       }
 
       const data: { usage: Usage } = await response.json();
