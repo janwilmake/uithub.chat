@@ -1,20 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-darkmode="false">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UIThub Chat - Context-driven LLM Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        .dark-invert {
+            filter: invert(1) hue-rotate(180deg);
+        }
+
+        .dark-invert img {
+            filter: invert(1) hue-rotate(180deg);
+        }
+
+        [data-darkmode="true"] {
+            background-color: #111;
+        }
+
+        [data-darkmode="true"] .dark-invert {
+            filter: none;
+        }
+
+        .message-content pre {
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .message-content code {
+            font-size: 0.875rem;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            opacity: 0.5;
+            transition-property: opacity;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+
+        .copy-btn:hover {
+            background-color: rgb(229 231 235);
+        }
+
+        .think-container {
+            background-color: rgb(243 244 246);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+
+        [data-darkmode="true"] .think-container {
+            background-color: rgb(31 41 55);
+        }
+
+        .think-content {
+            display: none;
+            margin-top: 0.5rem;
+        }
+
+        #messages {
+            scroll-behavior: smooth;
+        }
+
+        .copied-feedback {
+            position: absolute;
+            top: 0.5rem;
+            right: 2rem;
+            font-size: 1rem;
+            color: rgb(75 85 99);
+            opacity: 0;
+            transition-property: opacity;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+
+        .copied-feedback.show {
+            opacity: 1;
+        }
+    </style>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    animation: {
-                        'bounce-slow': 'bounce 1.5s infinite',
-                    }
-                }
-            }
+        marked.setOptions({
+            highlight: function (code, lang) {
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true
+        });
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.getAttribute('data-darkmode') === 'true';
+            document.documentElement.setAttribute('data-darkmode', !isDark);
         }
     </script>
 </head>
@@ -22,26 +110,44 @@
 <body class="bg-gray-50">
     <div class="flex h-screen">
         <!-- Left Navigation -->
-        <div class="w-1/4 bg-white border-r border-gray-200 flex flex-col">
-            <!-- Add Context Button -->
+        <div class="w-1/4 bg-white border-r border-gray-200 flex flex-col dark-invert">
             <div class="p-4 border-b border-gray-200">
                 <button onclick="addContext()"
                     class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded hover:opacity-90 transition-opacity">
                     Add Context
                 </button>
             </div>
-            <!-- Navigation Tree -->
             <div id="navigation" class="flex-1 overflow-y-auto p-2"></div>
         </div>
 
         <!-- Right Content -->
-        <div class="w-3/4 flex flex-col">
-            <!-- Tabs -->
-            <div id="header"></div>
+        <div class="w-3/4 flex flex-col dark-invert">
+            <div id="header" class="flex items-center justify-between p-2 bg-white">
+                <div class="flex items-center space-x-4">
+                    <a id="outlink" href="#" target="_blank" class="hidden text-gray-600 hover:text-purple-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </a>
+                </div>
+                <button onclick="toggleDarkMode()" class="p-2 rounded hover:bg-gray-100">
+                    🌓
+                </button>
+            </div>
+
             <div class="flex border-b border-gray-200 bg-white">
                 <button onclick="switchTab('context')" id="contextTab"
-                    class="px-4 py-2 hover:bg-gray-50 focus:outline-none border-b-2">
-                    Context
+                    class="px-4 py-2 hover:bg-gray-50 focus:outline-none border-b-2 flex items-center space-x-2 border-purple-500">
+                    <span>Context</span>
+                    <span id="tokenCount" class="text-sm text-gray-500">(0)</span>
+                    <button onclick="copyContext()" class="text-gray-400 hover:text-purple-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                    </button>
                 </button>
                 <button onclick="switchTab('chat')" id="chatTab"
                     class="px-4 py-2 hover:bg-gray-50 focus:outline-none border-b-2">
@@ -49,21 +155,18 @@
                 </button>
             </div>
 
-            <!-- Content Area -->
             <div class="flex-1 p-4 bg-gray-50">
-                <!-- Context View -->
-                <textarea id="contextContent" class="w-full h-full p-4 border rounded resize-none bg-white" readonly
-                    placeholder="Please select a context">
-                </textarea>
+                <textarea id="contextContent" class="w-full h-full p-4 border rounded resize-none bg-white"
+                    placeholder="Please select a context" oninput="updateTokenCount()"></textarea>
 
-                <!-- Chat Interface -->
-                <div id="chatInterface" class="hidden h-full flex flex-col">
-                    <div id="messages" class="flex-1 overflow-y-auto mb-4 bg-white border rounded p-4"></div>
+                <div id="chatInterface" class="h-full flex flex-col hidden overflow-y-auto">
+                    <div id="messages" class="flex-1 overflow-y-auto max-h-[70vh] mb-4 bg-white border rounded p-4">
+                    </div>
                     <div class="flex gap-2">
-                        <input type="text" id="messageInput" class="flex-1 p-2 border rounded"
-                            placeholder="Type your message...">
+                        <textarea id="messageInput" class="flex-1 p-2 border rounded" placeholder="Type your message..."
+                            rows="2" onkeydown="handleTextareaKey(event)"></textarea>
                         <button onclick="sendMessage()" id="sendButton"
-                            class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded hover:opacity-90 transition-opacity">
+                            class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded hover:opacity-90 transition-opacity self-end">
                             Send
                         </button>
                     </div>
@@ -72,75 +175,112 @@
         </div>
     </div>
 
-    <!-- Loading Indicator -->
-    <div id="loadingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 flex flex-col items-center">
-            <div class="flex space-x-2 mb-3">
-                <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: -0.3s"></div>
-                <div class="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style="animation-delay: -0.15s"></div>
-                <div class="w-3 h-3 bg-pink-500 rounded-full animate-bounce"></div>
-            </div>
-            <div class="text-gray-600">Processing your message...</div>
-        </div>
-    </div>
-
     <script src="header.js"></script>
     <script src="navigation.js"></script>
 
     <script>
-        // Initialize active tab from localStorage or default to 'context'
-        const activeTab = localStorage.getItem('activeTab') || 'context';
+        let activeContextUrl = '';
+        let activeTab = localStorage.getItem('activeTab') || 'context';
 
-        // Check for last message in localStorage
-        window.addEventListener('DOMContentLoaded', () => {
-            const lastMessage = localStorage.getItem('lastMessage');
-            if (lastMessage) {
-                document.getElementById('messageInput').value = lastMessage;
-                localStorage.removeItem('lastMessage');
+        function updateTokenCount() {
+            const text = document.getElementById('contextContent').value;
+            document.getElementById('tokenCount').textContent = `(${Math.round(text.length / 5)})`;
+        }
+
+        function copyContext() {
+            navigator.clipboard.writeText(document.getElementById('contextContent').value);
+            showCopiedFeedback(event.target);
+        }
+
+        function handleTextareaKey(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
             }
-            switchTab(activeTab);
-        });
+        }
+
+        function showCopiedFeedback(button) {
+            const feedback = document.createElement('span');
+            feedback.className = 'copied-feedback';
+            feedback.textContent = 'Copied!';
+
+            const existingFeedback = button.parentElement.querySelector('.copied-feedback');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+
+            button.parentElement.appendChild(feedback);
+            setTimeout(() => feedback.classList.add('show'), 10);
+            setTimeout(() => {
+                feedback.classList.remove('show');
+                setTimeout(() => feedback.remove(), 300);
+            }, 1000);
+        }
 
         function switchTab(tab) {
+            activeTab = tab;
             localStorage.setItem('activeTab', tab);
 
-            // Update UI elements
-            const contextContent = document.getElementById('contextContent');
-            const chatInterface = document.getElementById('chatInterface');
-            const contextTab = document.getElementById('contextTab');
-            const chatTab = document.getElementById('chatTab');
+            document.getElementById('contextTab').classList[tab === 'context' ? 'add' : 'remove']('border-purple-500');
+            document.getElementById('chatTab').classList[tab === 'chat' ? 'add' : 'remove']('border-purple-500');
 
-            if (tab === 'context') {
-                contextContent.classList.remove('hidden');
-                chatInterface.classList.add('hidden');
-                contextTab.classList.add('border-purple-500');
-                chatTab.classList.remove('border-purple-500');
-            } else {
-                contextContent.classList.add('hidden');
-                chatInterface.classList.remove('hidden');
-                contextTab.classList.remove('border-purple-500');
-                chatTab.classList.add('border-purple-500');
-            }
+            document.getElementById('contextContent').classList.toggle('hidden', tab !== 'context');
+            document.getElementById('chatInterface').classList.toggle('hidden', tab !== 'chat');
+        }
+
+        function appendMessage(role, content) {
+            const messagesContainer = document.getElementById('messages');
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-2 p-2 rounded relative ${role === 'user'
+                ? 'bg-purple-100 mr-8'
+                : role === 'assistant'
+                    ? 'bg-gray-100 ml-8'
+                    : 'bg-red-100 text-center'}`;
+
+            const processedContent = content
+                .replace(/<think>(.*?)<\/think>/gs, (_, p1) =>
+                    `<div class="think-container" onclick="this.querySelector('.think-content').classList.toggle('hidden')">
+                        <div class="think-content">${marked.parse(p1)}</div>
+                        <div class="text-gray-500 text-sm">Click to expand thinking...</div>
+                    </div>`);
+
+            messageDiv.innerHTML = `
+                <div class="message-content">${marked.parse(processedContent)}</div>
+                <button onclick="copyMessageContent(this)" class="copy-btn">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                </button>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            hljs.highlightAll();
+        }
+
+        function copyMessageContent(button) {
+            const content = button.previousElementSibling.textContent;
+            navigator.clipboard.writeText(content);
+            showCopiedFeedback(button);
         }
 
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
-            const messagesContainer = document.getElementById('messages');
-            const contextContent = document.getElementById('contextContent');
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            const sendButton = document.getElementById('sendButton');
-
             const message = messageInput.value.trim();
             if (!message) return;
 
-            // Add user message to chat
             appendMessage('user', message);
             messageInput.value = '';
 
-            // Show loading indicator and disable send button
-            loadingIndicator.classList.remove('hidden');
-            sendButton.disabled = true;
-            messageInput.disabled = true;
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'mb-2 p-2 rounded bg-gray-100 ml-8';
+            loadingDiv.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500"></div>
+                    <span class="text-gray-600">Processing...</span>
+                </div>
+            `;
+            document.getElementById('messages').appendChild(loadingDiv);
 
             try {
                 const response = await fetch('/chat/completions', {
@@ -149,9 +289,11 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        model: localStorage.getItem("model") || window.data.models[0],
-                        prompt: contextContent.value,
-                        message: message
+                        model: localStorage.getItem("model"),
+                        messages: [
+                            { role: "system", content: document.getElementById('contextContent').value },
+                            { role: "user", content: message }
+                        ]
                     })
                 });
 
@@ -166,46 +308,19 @@
                     return;
                 }
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    alert(errorText);
-                    return;
-                }
-
                 const data = await response.json();
-                appendMessage('assistant', data.response);
+                document.getElementById('messages').removeChild(loadingDiv);
+                appendMessage('assistant', data.choices[0].message.content);
             } catch (error) {
                 console.error('Error:', error);
                 appendMessage('system', 'Error sending message. Please try again.');
-            } finally {
-                // Hide loading indicator and enable inputs
-                loadingIndicator.classList.add('hidden');
-                sendButton.disabled = false;
-                messageInput.disabled = false;
-                messageInput.focus();
             }
         }
 
-        function appendMessage(role, content) {
-            const messagesContainer = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `mb-2 p-2 rounded ${role === 'user'
-                    ? 'bg-purple-100 ml-8'
-                    : role === 'assistant'
-                        ? 'bg-gray-100 mr-8'
-                        : 'bg-red-100 text-center'
-                }`;
-            messageDiv.textContent = content;
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        // Allow Enter key to send messages
-        document.getElementById('messageInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
+        window.addEventListener('DOMContentLoaded', () => {
+            switchTab(activeTab);
+            updateTokenCount();
+            document.getElementById('contextContent').addEventListener('input', updateTokenCount);
         });
     </script>
 </body>

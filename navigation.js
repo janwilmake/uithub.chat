@@ -147,6 +147,13 @@ async function selectContext(key) {
     const text = await response.text();
     document.getElementById("contextContent").value = text;
 
+    const messagesContainer = document.getElementById("messages");
+    messagesContainer.replaceChildren();
+
+    document.getElementById("tokenCount").textContent = `(${Math.round(
+      text.length / 5,
+    )})`;
+
     // Update tokens
     context.tokens = Math.round(text.length / 5);
     localStorage.setItem(

@@ -1,5 +1,6 @@
 import { Env as SponsorflareEnv, getSponsor, middleware } from "sponsorflare";
 import indexHtml from "./index-html.html";
+import providersJson from "./providers.json";
 
 interface Env extends SponsorflareEnv {
   deepseekApiKey: string;
@@ -35,7 +36,24 @@ export default {
       },
     };
 
+    const models = Object.keys(providersJson).map((provider) => {
+      const item = providersJson[provider as keyof typeof providersJson];
+      return {
+        provider,
+        description: item.description,
+        models: item.models as {
+          id: string;
+          promptCpm: number;
+          completionCpm: number;
+        }[],
+      };
+    });
+
     const providerForModels: { [key: string]: keyof typeof providers } = {
+      "gpt-4o-mini": "openai",
+      "gpt-4o": "openai",
+      o1: "openai",
+      "o3-mini": "openai",
       "deepseek-chat": "deepseek",
       "deepseek-reasoner": "deepseek",
       "llama-3.3-70b-versatile": "groq",
@@ -46,9 +64,9 @@ export default {
     };
 
     const url = new URL(request.url);
-
     const sponsorflare = await middleware(request, env);
     if (sponsorflare) return sponsorflare;
+
     const sponsor = await getSponsor(request, env);
 
     if (url.pathname === "/") {
@@ -57,7 +75,7 @@ export default {
           "<script>",
           `<script>\nwindow.data = ${JSON.stringify({
             sponsor,
-            models: Object.keys(providerForModels),
+            models,
           })};\n\n`,
         ),
         { headers: { "content-type": "text/html" } },

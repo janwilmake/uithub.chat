@@ -1,4 +1,4 @@
-create a html with tailwindcss script with a navigation on the left and context interface on the right (75%):
+Create a html with tailwindcss script with a navigation on the left and context interface on the right (75%):
 
 left: navigation:
 
@@ -20,6 +20,6 @@ left: navigation:
 
 right pane:
 
-- shows text area full width/height with the selected context. if no currentContext is selected, show 'please select a context'
+- Shows text area full width/height with the selected context. if no currentContext is selected, show 'please select a context'
 
 Create the part that does everything for the navigation and return a js codeblock so i can inmport that into the html

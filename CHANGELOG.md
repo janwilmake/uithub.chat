@@ -2,29 +2,42 @@
 
 - ✅ Make sponsorflare + chatcompletions wrapped backend work (allow $1 free) - start from sponsorflare.chat
 - ✅ Add logged user profile to header (header.js) that also shows setting to change LLM
+- ✅ Fix local login `/callback`
 - Fix chatcompletions.com error and ensure chatting works
-- Add other model names and api keys (openai, anthropic)
-- Render markdown, codeblock color highlighting, copy codeblocks, copy responses
-- Render `<think>` and any other raw tag, not in codeblock, as expandible things
+- ✅ Add other model names and api keys (openai, anthropic)
 
 # Tiny improvements
 
-- Setting to alter system prompt stored in config panel.
+prompt:
+
 - Create system prompt to output with `<content path="">some code or 'null' to delete</content>` etc similar to what i had for filetransformers, but using xml
-- add outlink for selected context in headerbar (icon)
-- Ensure loading only shows up for new message, not temporarily removing all chat history
-- Allow copying context to clipboard
-- Show token size at menu tab
-- Hide bin icon until hover, align at the right of the menu item, change to 'x'
-- Make header buttons more subtle
-- When clicking a menu item, focus on chat input
+
+Tabs;
+
+- Button for copying context to clipboard
+- add outlink that navigates to the URL of the selected context in headerbar (icon)
+- Show token count at menu tab (reads textarea value length / 5)
+
+Chat
+
+- Ensure loading shows at the location where the new message will be
+- Render markdown in response
+- Codeblock color highlighting
+- Buttons to copy codeblocks and copy responses
 - Chat input must be textarea
+- Allow darkmode by simply inverting all colors
+- Render `<think>` and any other raw tag, not in codeblock, as expandible things
+
+Nav
+
+- Hide bin icon until hover, align at the right of the menu item, change to 'x'
+- When clicking a menu item, focus on chat input
 - Context retrieval should go via proxy to avoid error. Should return urls for screenshot/content/html for html urls.
 - If added context is of type html, allow choosing screenshot/content/html and set context-item appropriately.
-- Allow darkmode by simply inverting all colors
+
+Misc
+
 - Add status via status API for providers
-- Make expensive models only available after sponsor
-- Put model selection as part of chat
 
 🔥 Add githuw (context-driven LLM chat) to forgithub and uithub.cf header
 
