@@ -21,14 +21,28 @@ export default {
         llmApiKey: env.deepseekApiKey,
         llmBasePath: "https://api.deepseek.com/v1",
       },
-      anthropic: { llmApiKey: env.anthropicApiKey, llmBasePath: "" },
-      openai: { llmApiKey: env.openaiApiKey, llmBasePath: "" },
-      groq: { llmApiKey: env.groqApiKey, llmBasePath: "" },
+      anthropic: {
+        llmApiKey: env.anthropicApiKey,
+        llmBasePath: "https://anthropic.actionschema.com",
+      },
+      openai: {
+        llmApiKey: env.openaiApiKey,
+        llmBasePath: "https://api.openai.com/v1",
+      },
+      groq: {
+        llmApiKey: env.groqApiKey,
+        llmBasePath: "https://api.groq.com/openai/v1",
+      },
     };
 
     const providerForModels: { [key: string]: keyof typeof providers } = {
       "deepseek-chat": "deepseek",
       "deepseek-reasoner": "deepseek",
+      "llama-3.3-70b-versatile": "groq",
+      "gemma2-9b-it": "groq",
+      "llama-3.1-8b-instant": "groq",
+      "mixtral-8x7b-32768": "groq",
+      "deepseek-r1-distill-llama-70b": "groq",
     };
 
     const url = new URL(request.url);
