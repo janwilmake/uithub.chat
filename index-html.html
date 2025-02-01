@@ -310,14 +310,14 @@
                 }
 
                 if (response.status === 402) {
-                    document.getElementById('messages').removeChild(loadingDiv);
+                    loadingDiv.remove()
 
                     appendMessage('system', 'You have spent more than $1. You need to add balance by sponsoring me');
                     return;
                 }
 
                 const data = await response.json();
-                document.getElementById('messages').removeChild(loadingDiv);
+                loadingDiv.remove()
                 appendMessage('assistant', data.choices[0].message.content);
             } catch (error) {
                 console.error('Error:', error);
@@ -328,6 +328,13 @@
         window.addEventListener('DOMContentLoaded', () => {
             switchTab(activeTab);
             updateTokenCount();
+
+            const lastMessage = localStorage.getItem('lastMessage');
+            if (lastMessage) {
+                document.getElementById("messageInput").value = lastMessage
+                localStorage.removeItem('lastMessage');
+            }
+
             document.getElementById('contextContent').addEventListener('input', updateTokenCount);
         });
     </script>

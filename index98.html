@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIThub Chat - Windows 98 Style</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <link rel="stylesheet" href="https://unpkg.com/98.css" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 8px;
+            background-color: #008080;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+            height: 100%;
+        }
+
+        .navigation-window {
+            width: 25%;
+            height: 100%;
+        }
+
+        .content-window {
+            width: 75%;
+            height: 100%;
+        }
+
+        .window {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .window-body {
+            flex: 1;
+            padding: 8px;
+            overflow: auto;
+        }
+
+        menu[role="tablist"] {
+            display: flex;
+            margin: 0;
+            padding: 0;
+            border-bottom: 1px solid #808080;
+            padding: 4px 4px 0 4px;
+            background: silver;
+        }
+
+        menu[role="tablist"] li {
+            margin-right: 4px;
+            list-style: none;
+        }
+
+        menu[role="tablist"] a {
+            display: inline-block;
+            text-decoration: none;
+            color: black;
+            padding: 4px 8px;
+            border: 1px solid #808080;
+            background: silver;
+            position: relative;
+            bottom: -1px;
+        }
+
+        menu[role="tablist"] li[aria-selected="true"] a {
+            border-bottom: 1px solid white;
+            background: white;
+        }
+
+        .tree-view {
+            font-family: "Pixelated MS Sans Serif", Arial;
+            font-size: 12px;
+            height: 100%;
+            overflow: auto;
+            background: white;
+        }
+
+        .tree-view details>summary {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .tree-view details>summary::before {
+            content: "►";
+            font-size: 10px;
+            transform: rotate(0);
+            transition: transform 0.1s;
+        }
+
+        .tree-view details[open]>summary::before {
+            transform: rotate(90deg);
+        }
+
+        .tree-view .delete-btn {
+            margin-left: auto;
+            visibility: hidden;
+        }
+
+        .tree-view li:hover>.delete-btn,
+        .tree-view summary:hover>.delete-btn {
+            visibility: visible;
+        }
+
+        .tree-view li.selected {
+            background: #000080;
+            color: white;
+        }
+
+        .tree-view li {
+            cursor: pointer;
+            padding: 1px 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tree-view li:hover {
+            background: #000080;
+            color: white;
+        }
+
+        .tree-view details {
+            margin-left: 16px;
+        }
+
+        .tab-content {
+            display: none;
+            height: calc(100% - 30px);
+            padding: 8px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        #contextContent {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            resize: none;
+        }
+
+        .chat-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages-container {
+            flex: 1;
+            border: 1px solid #808080;
+            background: white;
+            padding: 8px;
+            margin-bottom: 8px;
+            overflow-y: auto;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-container textarea {
+            flex: 1;
+            height: 80px;
+            resize: none;
+        }
+
+        .message {
+            margin-bottom: 8px;
+            padding: 8px;
+            position: relative;
+        }
+
+        .message.user {
+            background-color: #efefef;
+            margin-left: 50px;
+        }
+
+        .message.assistant {
+            background-color: #ffffff;
+            margin-right: 50px;
+            border: 1px solid #dfdfdf;
+        }
+
+        .message.system {
+            background-color: #ffefef;
+            text-align: center;
+        }
+
+        .add-context-btn {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        pre {
+            background: #000080;
+            color: #ffffff;
+            padding: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: "Pixelated MS Sans Serif", Arial;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Navigation Window -->
+        <div class="navigation-window">
+            <div class="window">
+                <div class="title-bar">
+                    <div class="title-bar-text">Navigation</div>
+                    <div class="title-bar-controls">
+                        <button aria-label="Minimize"></button>
+                        <button aria-label="Maximize"></button>
+                        <button aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="window-body">
+                    <button class="add-context-btn" onclick="addContext()">Add Context</button>
+                    <div id="navigation" class="tree-view"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Window -->
+        <div class="content-window">
+            <div class="window">
+                <div class="title-bar">
+                    <div class="title-bar-text">Chat Interface</div>
+                    <div class="title-bar-controls">
+                        <button aria-label="Help" onclick="toggleDarkMode()"></button>
+                        <button aria-label="Minimize"></button>
+                        <button aria-label="Maximize"></button>
+                        <button aria-label="Close"></button>
+                    </div>
+                </div>
+
+                <menu role="tablist">
+                    <li role="tab" onclick="switchTab('context')" id="contextTab" aria-selected="true">
+                        <a href="#context">Context <span id="tokenCount">(0)</span></a>
+                    </li>
+                    <li role="tab" onclick="switchTab('chat')" id="chatTab">
+                        <a href="#chat">Chat</a>
+                    </li>
+                </menu>
+
+                <div class="window-body" style="padding: 0;">
+                    <div id="context" class="tab-content active">
+                        <textarea id="contextContent" placeholder="Please select a context"
+                            oninput="updateTokenCount()"></textarea>
+                    </div>
+
+                    <div id="chat" class="tab-content">
+                        <div class="chat-container">
+                            <div id="messages" class="messages-container"></div>
+                            <div class="input-container">
+                                <textarea id="messageInput" placeholder="Type your message..."
+                                    onkeydown="handleTextareaKey(event)"></textarea>
+                                <button onclick="sendMessage()" id="sendButton">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-bar">
+                    <p class="status-bar-field">Ready</p>
+                    <p class="status-bar-field" id="outlink"></p>
+                    <p class="status-bar-field">Windows 98 Style</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="header.js"></script>
+    <script>
+        // Update the navigation rendering to use tree view
+        function renderNavigation() {
+            const contexts = getContexts();
+            const groups = groupContexts(contexts);
+            const currentContext = localStorage.getItem("currentContext");
+            let html = '<ul class="tree-view-root">';
+
+            Object.entries(groups).forEach(([domain, paths]) => {
+                html += `
+                    <li>
+                        <details>
+                            <summary>
+                                ${domain}
+                                <button class="delete-btn" onclick="deleteSection('${domain}')">🗑️</button>
+                            </summary>
+                            <ul>`;
+
+                Object.entries(paths).forEach(([path, items]) => {
+                    html += `
+                        <li>
+                            <details>
+                                <summary>
+                                    ${path || "/"}
+                                </summary>
+                                <ul>`;
+
+                    items.forEach((item) => {
+                        const isSelected = item.key === currentContext;
+                        html += `
+                            <li class="${isSelected ? 'selected' : ''}" 
+                                onclick="selectContext('${item.key}')"
+                                title="${item.description || ''}">
+                                <span class="item-title">${item.title || item.url}</span>
+                                ${item.tokens ? `<span class="token-count">${item.tokens}</span>` : ''}
+                                <button class="delete-btn" 
+                                    onclick="event.stopPropagation(); deleteContext('${item.key}')">
+                                    🗑️
+                                </button>
+                            </li>`;
+                    });
+
+                    html += `</ul></li>`;
+                });
+
+                html += `</ul></details></li>`;
+            });
+
+            html += '</ul>';
+            document.getElementById("navigation").innerHTML = html;
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            localStorage.setItem('activeTab', tab);
+
+            // Update tab selection
+            document.querySelectorAll('[role="tab"]').forEach(el => {
+                el.setAttribute('aria-selected', 'false');
+            });
+            document.getElementById(tab + 'Tab').setAttribute('aria-selected', 'true');
+
+            // Show active content
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(tab).classList.add('active');
+        }
+
+
+
+
+        // Helper functions
+        const getContexts = () => JSON.parse(localStorage.getItem("context") || "[]");
+        const setContexts = (contexts) => localStorage.setItem("context", JSON.stringify(contexts));
+
+        // Group contexts by domain and path
+        function groupContexts(contexts) {
+            const groups = {};
+            contexts
+                .sort((a, b) => a.url.localeCompare(b.url))
+                .forEach((context) => {
+                    const url = new URL(context.url);
+                    const domain = url.hostname;
+                    const path = url.pathname
+                        .split("/")
+                        .filter((p) => p)
+                        .join("/");
+
+                    if (!groups[domain]) groups[domain] = {};
+                    if (!groups[domain][path]) groups[domain][path] = [];
+                    groups[domain][path].push(context);
+                });
+            return groups;
+        }
+
+        async function selectContext(key) {
+            const context = getContexts().find((c) => c.key === key);
+            if (!context) return;
+
+            try {
+                localStorage.setItem("currentContext", key);
+                renderNavigation();
+
+                const response = await fetch(context.url);
+                const text = await response.text();
+                document.getElementById("contextContent").value = text;
+
+                const messagesContainer = document.getElementById("messages");
+                messagesContainer.replaceChildren();
+
+                document.getElementById("tokenCount").textContent = `(${Math.round(text.length / 5)})`;
+
+                // Update tokens
+                context.tokens = Math.round(text.length / 5);
+                localStorage.setItem(
+                    "context",
+                    JSON.stringify(getContexts().map((c) => (c.key === key ? context : c)))
+                );
+            } catch (error) {
+                alert(`Error loading context: ${error.message}`);
+            }
+        }
+
+        function deleteSection(domain) {
+            event.stopPropagation();
+            if (!confirm(`Delete all contexts for ${domain}?`)) return;
+
+            const contexts = getContexts().filter((context) => {
+                const url = new URL(context.url);
+                return url.hostname !== domain;
+            });
+            setContexts(contexts);
+            renderNavigation();
+        }
+
+        function deleteContext(key) {
+            event.stopPropagation();
+            const contexts = getContexts().filter((context) => context.key !== key);
+            setContexts(contexts);
+            if (localStorage.getItem("currentContext") === key) {
+                localStorage.removeItem("currentContext");
+                document.getElementById("contextContent").value = "";
+                updateTokenCount();
+            }
+            renderNavigation();
+        }
+
+        function addContext() {
+            const url = prompt("Enter URL:");
+            if (!url) return;
+            window.location.href = `?context=${encodeURIComponent(url)}`;
+        }
+
+        function updateTokenCount() {
+            const text = document.getElementById("contextContent").value;
+            document.getElementById("tokenCount").textContent = `(${Math.round(text.length / 5)})`;
+        }
+
+        function handleTextareaKey(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function appendMessage(role, content) {
+            const messagesContainer = document.getElementById("messages");
+
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${role}`;
+
+            const processedContent = content.replace(/<think>(.*?)<\/think>/gs, (_, p1) =>
+                `<div class="think-container" onclick="this.querySelector('.think-content').classList.toggle('hidden')">
+            <div class="think-content">${marked.parse(p1)}</div>
+            <div>Click to expand thinking...</div>
+        </div>`
+            );
+
+            messageDiv.innerHTML = `
+        <div class="message-content">${marked.parse(processedContent)}</div>
+        <button onclick="copyMessageContent(this)" class="copy-btn">📋</button>
+    `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            hljs.highlightAll();
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById("messageInput");
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            appendMessage("user", message);
+            messageInput.value = "";
+
+            const loadingDiv = document.createElement("div");
+            loadingDiv.className = "message system";
+            loadingDiv.innerHTML = "Processing...";
+            document.getElementById("messages").appendChild(loadingDiv);
+
+            try {
+                const response = await fetch('/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: localStorage.getItem("model"),
+                        messages: [
+                            { role: "system", content: document.getElementById('contextContent').value },
+                            { role: "user", content: message }
+                        ]
+                    })
+                });
+
+                if (response.status === 401) {
+                    localStorage.setItem('lastMessage', message);
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.status === 402) {
+                    document.getElementById('messages').removeChild(loadingDiv);
+                    appendMessage('system', 'You have spent more than $1. You need to add balance by sponsoring me');
+                    return;
+                }
+
+                const data = await response.json();
+                document.getElementById('messages').removeChild(loadingDiv);
+                appendMessage('assistant', data.choices[0].message.content);
+            } catch (error) {
+                console.error('Error:', error);
+                appendMessage('system', 'Error sending message. Please try again.');
+            }
+        }
+
+        // Handle context from URL parameter
+        async function handleContextParam() {
+            const params = new URLSearchParams(window.location.search);
+            const contextUrl = params.get("context");
+            if (!contextUrl) return;
+
+            try {
+                const response = await fetch(contextUrl);
+                const text = await response.text();
+                let contexts = getContexts();
+
+                try {
+                    const json = JSON.parse(text);
+                    if (json.context) {
+                        json.context.forEach((newContext) => {
+                            const existingIndex = contexts.findIndex(
+                                (c) => c.key === newContext.key
+                            );
+                            if (existingIndex >= 0) {
+                                contexts[existingIndex] = newContext;
+                            } else {
+                                contexts.push(newContext);
+                            }
+                        });
+                    } else {
+                        const newContext = {
+                            key: contextUrl,
+                            url: contextUrl,
+                            title: new URL(contextUrl).pathname,
+                            tokens: Math.round(text.length / 5),
+                        };
+                        const existingIndex = contexts.findIndex(
+                            (c) => c.key === newContext.key
+                        );
+                        if (existingIndex >= 0) {
+                            contexts[existingIndex] = newContext;
+                        } else {
+                            contexts.push(newContext);
+                        }
+                    }
+                } catch {
+                    const newContext = {
+                        key: contextUrl,
+                        url: contextUrl,
+                        title: new URL(contextUrl).pathname,
+                        tokens: Math.round(text.length / 5),
+                    };
+                    const existingIndex = contexts.findIndex((c) => c.key === newContext.key);
+                    if (existingIndex >= 0) {
+                        contexts[existingIndex] = newContext;
+                    } else {
+                        contexts.push(newContext);
+                    }
+                }
+
+                setContexts(contexts);
+                localStorage.setItem("currentContext", contexts[contexts.length - 1].key);
+                window.location.href = window.location.pathname;
+            } catch (error) {
+                alert(`Error adding context: ${error.message}`);
+            }
+        }
+
+        // Initialize
+        handleContextParam();
+        renderNavigation();
+        const currentContext = localStorage.getItem("currentContext");
+        if (currentContext) {
+            selectContext(currentContext);
+        }
+    </script>
+</body>
+
+</html>

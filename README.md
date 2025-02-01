@@ -13,17 +13,9 @@ Non-goals:
 - Message editing, history saving (focus on core features)
 - Allow BYOK (optimise for accessibility)
 
-Wishlist:
-
-- **Context URL**: if url outputs JSON with 'context' it should store that but further expand its context {url,title}[] but it should do this on each refresh from the original URL.
-- **Status**: Add status via status API for providers
-- **Droparea**: create droparea that lights up purple dotted so you can drag and drop URLs
-- **Sharing result**: Use x-output-url from chatcompletions.com to allow sharing of the response (add outlink besides copy). Maybe can also use URL as prompt instead, and allow `?chat=chatcompletionsURL` to load it into the chat. This way, people can save their chat history!
-- **File upload**: Allow uploading files by dragging them (uploads with multipart into a zip, making it a secret zipobject url).
-- Fix patching and allow patching from response with `<code>`
-
 ## TODO
 
+- Subtract right amount of credit!
 - Header: Add outlink that navigates to the URL of the selected context in headerbar (icon)
 - Chat: Render `<think>` and any other raw tag in a way that it's indented and other color/bg-color.
 
@@ -33,3 +25,13 @@ Nav
 - When clicking a menu item, focus on chat input, if visible
 - Context retrieval should go via proxy to avoid error. Should return urls for screenshot/content/html for html urls.
 - If added context is of type html, allow choosing screenshot/content/html and set context-item appropriately.
+
+## Wishlist
+
+- **Context URL**: if url outputs JSON with 'context' it should store that but further expand its context {url,title}[] but it should do this on each refresh from the original URL.
+- **Status**: Add status via status API for providers
+- **Droparea**: create droparea that lights up purple dotted so you can drag and drop URLs
+- **Sharing result**: Use x-output-url from chatcompletions.com to allow sharing of the response (add outlink besides copy). Maybe can also use URL as prompt instead, and allow `?chat=chatcompletionsURL` to load it into the chat. This way, people can save their chat history! also, every codeblock needs button to open it.
+- **File upload**: Allow uploading files by dragging them (uploads with multipart into a zip, making it a secret zipobject url).
+- Fix patching and allow patching from response with `<code>`
+- Try refactoring to use https://jdan.github.io/98.css/
